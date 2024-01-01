@@ -3,9 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_constraintlayout/flutter_constraintlayout.dart';
+import 'package:laserauth/api.dart';
 import 'package:laserauth/bloc/i_button_device_bloc.dart';
+import 'package:laserauth/cubit/authorized_user_cubit.dart';
 import 'package:laserauth/cubit/login_cubit.dart';
 import 'package:laserauth/price.dart';
+import 'package:laserauth/util.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,20 +31,34 @@ class _LoginScreenState extends State<LoginScreen> {
         LoggedOut(:final lastCosts, :final lastName) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              BlocListener<IButtonDeviceBloc, Set<Uint8List>>(
-                listener: (context, state) {
-                  if (state.isNotEmpty) {
-                    login.login(iButtonId: state.first, name: '???');
-                  }
-                },
-                child: InkWell(
-                    onTap: () {
-                      login.login(iButtonId: Uint8List.fromList([0, 1, 2, 3, 4, 5]), name: 'ripper');
+              BlocBuilder<AuthorizedUserCubit, List<AuthorizedUser>>(
+                builder: (context, authorizedUsers) {
+                  return BlocListener<IButtonDeviceBloc, Set<Uint8List>>(
+                    listener: (context, state) {
+                      if (state.isNotEmpty) {
+                        final user = authorizedUsers.tryFirstWhere((user) => user.iButtonId == state.first);
+                        if (user != null) {
+                          login.login(iButtonId: user.iButtonId, name: user.name);
+                        } else {
+                          final theme = Theme.of(context);
+
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: const Text('You are not authorized!'),
+                            backgroundColor: theme.colorScheme.error,
+                          ));
+                        }
+                      }
                     },
-                    child: Text(
-                      'Please log in using your iButton.',
-                      style: theme.textTheme.headlineLarge,
-                    )),
+                    child: InkWell(
+                        onTap: () {
+                          login.login(iButtonId: Uint8List.fromList([0, 1, 2, 3, 4, 5]), name: 'ripper');
+                        },
+                        child: Text(
+                          'Please log in using your iButton.',
+                          style: theme.textTheme.headlineLarge,
+                        )),
+                  );
+                },
               ),
               const SizedBox(
                 height: 16,
