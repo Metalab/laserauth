@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_constraintlayout/flutter_constraintlayout.dart';
 import 'package:laserauth/api.dart';
 import 'package:laserauth/bloc/i_button_device_bloc.dart';
+import 'package:laserauth/config.dart';
 import 'package:laserauth/cubit/authorized_user_cubit.dart';
 import 'package:laserauth/cubit/login_cubit.dart';
 import 'package:laserauth/log.dart';
@@ -12,7 +13,9 @@ import 'package:laserauth/price.dart';
 import 'package:laserauth/util.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({required this.configuration, super.key});
+
+  final Configuration configuration;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -40,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         final user = authorizedUsers.tryFirstWhere((user) => user.compareIButtonId(state));
                         log.i('Trying to log in user ${user?.name}');
                         if (user != null) {
-                          login.login(iButtonId: user.iButtonId, name: user.name);
+                          context.read<LoginCubit>().login(iButtonId: user.iButtonId, name: user.name);
                         } else {
                           final theme = Theme.of(context);
 
@@ -96,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       top: powerLabel.bottom.margin(4),
                     ),
                     Text(
-                      '€ ${(centsForLaserTime(laserSeconds, extern: extern) / 100).toStringAsFixed(2)}',
+                      '€ ${(centsForLaserTime(laserSeconds, extern: extern, configuration: widget.configuration) / 100).toStringAsFixed(2)}',
                     ).applyConstraint(
                       left: parent.center.margin(4),
                       baseline: costsLabel.baseline,

@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:laserauth/bloc/i_button_device_bloc.dart';
+import 'package:laserauth/config.dart';
 import 'package:laserauth/content.dart';
 import 'package:laserauth/cubit/authorized_user_cubit.dart';
 import 'package:laserauth/cubit/login_cubit.dart';
 
 Future<void> main() async {
-  runApp(const MyApp());
+  final configuration = await readConfigFile();
+  runApp(MyApp(configuration: configuration));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({required this.configuration, super.key});
+
+  final Configuration configuration;
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: login),
+        BlocProvider(create: (_) => LoginCubit(configuration: configuration)),
         BlocProvider.value(value: iButtonDevices),
-        BlocProvider.value(value: authorizedUser),
+        BlocProvider(create: (_) => AuthorizedUserCubit(configuration: configuration)),
       ],
       child: MaterialApp(
         title: 'Laserauth',
@@ -46,7 +50,7 @@ class MyApp extends StatelessWidget {
                           if (!state.extern)
                             IconButton(
                                 onPressed: () {
-                                  login.setExtern();
+                                  context.read<LoginCubit>().setExtern();
                                 },
                                 icon: Image.asset(
                                   'assets/alien-head.png',
@@ -61,7 +65,7 @@ class MyApp extends StatelessWidget {
                       ? const SizedBox()
                       : IconButton(
                           onPressed: () {
-                            login.logout();
+                            context.read<LoginCubit>().logout();
                           },
                           icon: Icon(
                             Icons.power_off,
@@ -70,7 +74,9 @@ class MyApp extends StatelessWidget {
                         ),
                 ],
               ),
-              body: const Content(),
+              body: Content(
+                configuration: configuration,
+              ),
             );
           },
         ),

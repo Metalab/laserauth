@@ -6,7 +6,6 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:laserauth/constants.dart';
 import 'package:laserauth/log.dart';
 import 'package:laserauth/util.dart';
 
@@ -51,12 +50,17 @@ final class Status {
         current = (json['ENERGY'] as Map<String, dynamic>)['Current'];
 }
 
-Future<Status> fetchStatus() async {
-  final url = Uri.http(powerMeterIP, 'cm', {'cmnd': 'Status 10'});
+Future<Status> fetchStatus({required String powerMeterIP, required String password}) async {
+  final url = Uri.http(powerMeterIP, 'cm', {'cmnd': 'Status 10', 'user': 'admin', 'password': password});
   final response = await http.get(url);
   final json = jsonDecode(response.body);
 
   return Status.fromJson(json['StatusSNS']);
+}
+
+Future<void> setPowerStatus({required bool power, required String powerMeterIP, required String password}) async {
+  final url = Uri.http(powerMeterIP, 'cm', {'cmnd': 'Power $power', 'user': 'admin', 'password': password});
+  await http.get(url);
 }
 
 final class AuthorizedUser {
@@ -93,7 +97,7 @@ List<AuthorizedUser> parseData(Uint8List data) {
       .toList(growable: false);
 }
 
-Stream<List<AuthorizedUser>> userList() async* {
+Stream<List<AuthorizedUser>> userList(String updateUrl) async* {
   Uint8List? data;
   try {
     data = await File(iButtonFile).readAsBytes();

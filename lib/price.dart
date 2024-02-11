@@ -1,5 +1,5 @@
-import 'package:laserauth/constants.dart';
+import 'package:laserauth/config.dart';
 
-int centsForLaserTime(int seconds, {required bool extern}) {
-  return (seconds * (extern ? externPricePerMinute : pricePerMinute) / 60).round();
+int centsForLaserTime(int seconds, {required bool extern, required Configuration configuration}) {
+  return (seconds * (extern ? configuration.externPricePerMinute : configuration.pricePerMinute) / 60).round();
 }

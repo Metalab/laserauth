@@ -1,5 +1,1 @@
-const laserPowerMinimum = 260;
-const powerMeterIP = 'laserauth.lan';
-const updateUrl = 'https://metalab.at/ibuttons';
-const pricePerMinute = 100;
-const externPricePerMinute = 150;
+const configFile = 'config.yaml';

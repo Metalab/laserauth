@@ -1,0 +1,6 @@
+updateUrl: "https://metalab.at/ibuttons" # MOS REST URL
+pricePerMinute: 100 # in Eurocents
+externPricePerMinute: 150 # in Eurocents
+laserPowerMinimum: 260 # in W
+powerMeterIP: "laserauth.lan"
+password: "*******"
