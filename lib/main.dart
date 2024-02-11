@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:laserauth/bloc/i_button_device_bloc.dart';
 import 'package:laserauth/content.dart';
+import 'package:laserauth/cubit/authorized_user_cubit.dart';
 import 'package:laserauth/cubit/login_cubit.dart';
 
 Future<void> main() async {
@@ -17,6 +18,7 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider.value(value: login),
         BlocProvider.value(value: iButtonDevices),
+        BlocProvider.value(value: authorizedUser),
       ],
       child: MaterialApp(
         title: 'Laserauth',

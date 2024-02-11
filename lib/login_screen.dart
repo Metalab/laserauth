@@ -7,6 +7,7 @@ import 'package:laserauth/api.dart';
 import 'package:laserauth/bloc/i_button_device_bloc.dart';
 import 'package:laserauth/cubit/authorized_user_cubit.dart';
 import 'package:laserauth/cubit/login_cubit.dart';
+import 'package:laserauth/log.dart';
 import 'package:laserauth/price.dart';
 import 'package:laserauth/util.dart';
 
@@ -33,10 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               BlocBuilder<AuthorizedUserCubit, List<AuthorizedUser>>(
                 builder: (context, authorizedUsers) {
-                  return BlocListener<IButtonDeviceBloc, Set<Uint8List>>(
+                  return BlocListener<IButtonDeviceBloc, Uint8List?>(
                     listener: (context, state) {
-                      if (state.isNotEmpty) {
-                        final user = authorizedUsers.tryFirstWhere((user) => user.iButtonId == state.first);
+                      if (state != null) {
+                        log.d('looking for $state in authorized: $authorizedUsers');
+                        final user = authorizedUsers.tryFirstWhere((user) => user.compareIButtonId(state));
                         if (user != null) {
                           login.login(iButtonId: user.iButtonId, name: user.name);
                         } else {
@@ -47,16 +49,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             backgroundColor: theme.colorScheme.error,
                           ));
                         }
+                        context.read<IButtonDeviceBloc>().reset();
                       }
                     },
-                    child: InkWell(
-                        onTap: () {
-                          login.login(iButtonId: Uint8List.fromList([0, 1, 2, 3, 4, 5]), name: 'ripper');
-                        },
-                        child: Text(
-                          'Please log in using your iButton.',
-                          style: theme.textTheme.headlineLarge,
-                        )),
+                    child: Text(
+                      'Please log in using your iButton.',
+                      style: theme.textTheme.headlineLarge,
+                    ),
                   );
                 },
               ),

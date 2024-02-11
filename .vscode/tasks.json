@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "flutterpi_tool",
+            "type": "shell",
+            "command": "flutterpi_tool",
+            "args": [
+                "build",
+                "--arch=arm64",
+                "--cpu=pi4"
+            ]
+        }
+    ]
+}

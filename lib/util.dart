@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 extension PairIterating<E> on Iterable<E> {
   Iterable<(E, E)> get pair => PairIterable._(this);
 }
@@ -38,4 +40,14 @@ extension TryFirstWhere<E> on Iterable<E> {
     }
     return null;
   }
+}
+
+Uint8List hexStringToUint8List(String hex) {
+  int length = hex.length;
+  Uint8List bytes = Uint8List(length ~/ 2);
+  for (int i = 0; i < length; i += 2) {
+    int byteValue = int.parse(hex.substring(i, i + 2), radix: 16);
+    bytes[i ~/ 2] = byteValue;
+  }
+  return bytes;
 }

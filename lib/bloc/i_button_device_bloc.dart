@@ -2,43 +2,36 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:laserauth/log.dart';
+import 'package:laserauth/util.dart';
 import 'package:udev/udev.dart';
-
-part 'i_button_device_event.dart';
 
 final iButtonDevices = IButtonDeviceBloc();
 
-class IButtonDeviceBloc extends Bloc<IButtonDeviceEvent, Set<Uint8List>> {
+class IButtonDeviceBloc extends Bloc<Uint8List?, Uint8List?> {
   IButtonDeviceBloc()
       : context = UdevContext(),
-        super(const {}) {
-    on<IButtonDeviceEvent>((event, emit) {
-      switch (event) {
-        case IButtonConnectedEvent(:final address):
-          final devices = Set<Uint8List>.from(state);
-          devices.add(address);
-          emit(devices);
-        case IButtonDisconnectedEvent(:final address):
-          final devices = Set<Uint8List>.from(state);
-          devices.remove(address);
-          emit(devices);
-      }
+        super(null) {
+    on<Uint8List?>((event, emit) {
+      emit(event);
     });
 
-    _subscription = context.monitorDevices(subsystems: ['1wire']).listen((event) {
-      // final address = event.devnode;
+    _subscription = context.monitorDevices(subsystems: ['w1']).listen((event) {
+      final address = event.sysname.replaceAll('-', '');
+      log.d('${event.action} device $address event $event');
+      final addressList = hexStringToUint8List(address);
+      log.d('parsed address = $addressList');
 
-      switch (event.action) {
-        case 'add':
-        // add(IButtonConnectedEvent(address));
-        case 'remove':
-        // add(IButtonDisconnectedEvent(address));
-      }
+      add(addressList);
     });
   }
 
   final UdevContext context;
   late final StreamSubscription _subscription;
+
+  void reset() {
+    add(null);
+  }
 
   @override
   Future<void> close() async {

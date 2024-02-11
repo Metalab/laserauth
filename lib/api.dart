@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -66,19 +67,35 @@ final class AuthorizedUser {
   final Uint8List iButtonId;
 
   const AuthorizedUser({required this.name, required this.iButtonId});
+
+  bool compareIButtonId(Uint8List inputId) => listEquals(iButtonId, inputId);
+
+  @override
+  String toString() => 'AuthorizedUser(name: $name, iButtonId: $iButtonId)';
 }
 
 const iButtonFile = 'iButtons.csv';
 
 List<AuthorizedUser> parseData(Uint8List data) {
-  return utf8.decode(data).split('\n').map((line) {
-    final separator = line.indexOf(',');
-    final id = Uint8List.fromList(line.substring(0, separator).replaceAll('-', '').characters.pair.map((codePoints) {
-      return int.parse(codePoints.$1 + codePoints.$2, radix: 16);
-    }).toList(growable: false));
+  return utf8
+      .decode(data)
+      .split('\n')
+      .map((line) {
+        if (line.isEmpty) {
+          return null;
+        }
+        log.d('line = "$line"');
+        var separator = line.indexOf(',');
+        if (separator == -1) {
+          separator = line.length - 1; // empty name
+        }
+        final id = hexStringToUint8List(line.substring(0, separator).replaceAll('-', ''));
+        log.d('id = $id, name = ${line.substring(separator + 1).trim()}');
 
-    return AuthorizedUser(name: line.substring(separator + 1).trim(), iButtonId: id);
-  }).toList(growable: false);
+        return AuthorizedUser(name: line.substring(separator + 1).trim(), iButtonId: id);
+      })
+      .whereType<AuthorizedUser>()
+      .toList(growable: false);
 }
 
 Stream<List<AuthorizedUser>> userList() async* {
