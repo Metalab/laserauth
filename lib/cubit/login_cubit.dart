@@ -25,6 +25,7 @@ class LoginCubit extends Cubit<LoginState> {
         name: name,
         pollTimer: pollTimer,
         startLaserEnergy: status.total,
+        loginTime: DateTime.now().toUtc(),
       ));
       setPowerStatus(power: true, powerMeterIP: configuration.powerMeterIP, password: configuration.password);
     } on Error catch (e) {
@@ -41,6 +42,7 @@ class LoginCubit extends Cubit<LoginState> {
           :final laserEnergy,
           :final startLaserEnergy,
           :final pollTimer,
+          :final loginTime,
         ):
         log.i('Switch to extern');
         emit(LoggedIn(
@@ -51,6 +53,7 @@ class LoginCubit extends Cubit<LoginState> {
           laserEnergy: laserEnergy,
           startLaserEnergy: startLaserEnergy,
           extern: extern,
+          loginTime: loginTime,
         ));
       case LoggedOut():
       case ConnectionFailed():
@@ -90,9 +93,10 @@ class LoginCubit extends Cubit<LoginState> {
             :var laserSeconds,
             :final extern,
             :final startLaserEnergy,
+            :final loginTime,
           ):
           final bool currentlyActive = response.power >= configuration.laserPowerMinimum;
-          if (currentlyActive) {
+          if (currentlyActive && DateTime.now().toUtc().difference(loginTime) > configuration.laserStartupTime) {
             laserSeconds++;
           }
           emit(LoggedIn(
@@ -104,6 +108,7 @@ class LoginCubit extends Cubit<LoginState> {
             pollTimer: t,
             extern: extern,
             currentlyActive: currentlyActive,
+            loginTime: loginTime,
           ));
       }
     } on ClientException catch (e) {

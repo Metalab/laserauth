@@ -22,6 +22,7 @@ final class LoggedIn extends LoginState {
     required this.pollTimer,
     this.extern = false,
     this.currentlyActive = false,
+    required this.loginTime,
   });
 
   final Uint8List iButtonId;
@@ -32,6 +33,7 @@ final class LoggedIn extends LoginState {
   final Timer pollTimer;
   final bool extern;
   final bool currentlyActive;
+  final DateTime loginTime;
 }
 
 final class ConnectionFailed extends LoginState {

@@ -15,6 +15,7 @@ final class Configuration {
   final int pricePerMinute;
   final int externPricePerMinute;
   final String password;
+  final Duration laserStartupTime;
 
   const Configuration({
     required this.laserPowerMinimum,
@@ -23,6 +24,7 @@ final class Configuration {
     required this.pricePerMinute,
     required this.externPricePerMinute,
     required this.password,
+    required this.laserStartupTime,
   });
 
   factory Configuration.fromJson(Map<dynamic, dynamic> json) {
@@ -33,6 +35,7 @@ final class Configuration {
       pricePerMinute: json['pricePerMinute'] as int,
       externPricePerMinute: json['externPricePerMinute'] as int,
       password: json['password'] as String,
+      laserStartupTime: Duration(seconds: json['laserStartupTime'] as int),
     );
   }
 }
