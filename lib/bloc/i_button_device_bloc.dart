@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:laserauth/log.dart';
 import 'package:laserauth/util.dart';
 import 'package:udev/udev.dart';
 
@@ -18,9 +17,7 @@ class IButtonDeviceBloc extends Bloc<Uint8List?, Uint8List?> {
 
     _subscription = context.monitorDevices(subsystems: ['w1']).listen((event) {
       final address = event.sysname.replaceAll('-', '');
-      log.d('${event.action} device $address event $event');
       final addressList = hexStringToUint8List(address);
-      log.d('parsed address = $addressList');
 
       add(addressList);
     });

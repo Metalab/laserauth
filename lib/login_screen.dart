@@ -37,8 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   return BlocListener<IButtonDeviceBloc, Uint8List?>(
                     listener: (context, state) {
                       if (state != null) {
-                        log.d('looking for $state in authorized: $authorizedUsers');
                         final user = authorizedUsers.tryFirstWhere((user) => user.compareIButtonId(state));
+                        log.i('Trying to log in user ${user?.name}');
                         if (user != null) {
                           login.login(iButtonId: user.iButtonId, name: user.name);
                         } else {

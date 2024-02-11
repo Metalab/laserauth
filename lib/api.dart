@@ -1,12 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:laserauth/constants.dart';
@@ -84,13 +81,11 @@ List<AuthorizedUser> parseData(Uint8List data) {
         if (line.isEmpty) {
           return null;
         }
-        log.d('line = "$line"');
         var separator = line.indexOf(',');
         if (separator == -1) {
           separator = line.length - 1; // empty name
         }
         final id = hexStringToUint8List(line.substring(0, separator).replaceAll('-', ''));
-        log.d('id = $id, name = ${line.substring(separator + 1).trim()}');
 
         return AuthorizedUser(name: line.substring(separator + 1).trim(), iButtonId: id);
       })
