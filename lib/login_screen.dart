@@ -32,43 +32,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return BlocBuilder<LoginCubit, LoginState>(
       builder: (context, state) => switch (state) {
-        LoggedOut(:final lastCosts, :final lastName) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              BlocBuilder<AuthorizedUserCubit, List<AuthorizedUser>>(
-                builder: (context, authorizedUsers) {
-                  return BlocListener<IButtonDeviceBloc, Uint8List?>(
-                    listener: (context, state) {
-                      if (state != null) {
-                        final user = authorizedUsers.tryFirstWhere((user) => user.compareIButtonId(state));
-                        log.i('Trying to log in user ${user?.name}');
-                        if (user != null) {
-                          context.read<LoginCubit>().login(iButtonId: user.iButtonId, name: user.name);
-                        } else {
-                          final theme = Theme.of(context);
-
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: const Text('You are not authorized!'),
-                            backgroundColor: theme.colorScheme.error,
-                          ));
-                        }
-                        context.read<IButtonDeviceBloc>().reset();
-                      }
-                    },
-                    child: Text(
-                      'Please log in using your iButton.',
-                      style: theme.textTheme.headlineLarge,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              if (lastCosts > 0) Text('Last job: € ${(lastCosts / 100).toStringAsFixed(2)} (operator $lastName)'),
-            ],
-          ),
-        LoggedIn(:final laserSeconds, :final laserEnergy, :final extern) => Center(
+        LoggedOut(:final lastCosts, :final lastName) => logoutScreen(context, lastCosts: lastCosts, lastName: lastName),
+        ConnectionFailed(:final message) => logoutScreen(context, error: message),
+        LoggedIn(:final laserSeconds, :final laserEnergy, :final extern, :final currentlyActive) => Center(
             child: Card(
               child: DefaultTextStyle(
                 style: theme.textTheme.headlineLarge!,
@@ -104,12 +70,92 @@ class _LoginScreenState extends State<LoginScreen> {
                       left: parent.center.margin(4),
                       baseline: costsLabel.baseline,
                     ),
+                    if (!currentlyActive)
+                      FilledButton(
+                        onPressed: () {
+                          context.read<LoginCubit>().logout();
+                        },
+                        child: const Text('Turn off'),
+                      ).applyConstraint(
+                        right: parent.right.margin(8),
+                        bottom: parent.bottom.margin(8),
+                      ),
+                    extern
+                        ? FilledButton(
+                            onPressed: () {
+                              context.read<LoginCubit>().setExtern(extern: false);
+                            },
+                            child: const Text('Switch to Member'),
+                          ).applyConstraint(
+                            left: parent.left.margin(8),
+                            bottom: parent.bottom.margin(8),
+                          )
+                        : OutlinedButton(
+                            onPressed: () {
+                              context.read<LoginCubit>().setExtern(extern: true);
+                            },
+                            child: const Text('Switch to Extern'),
+                          ).applyConstraint(
+                            left: parent.left.margin(8),
+                            bottom: parent.bottom.margin(8),
+                          ),
                   ],
                 ),
               ),
             ),
           ),
       },
+    );
+  }
+
+  Column logoutScreen(BuildContext context, {int? lastCosts, String? lastName, String? error}) {
+    final theme = Theme.of(context);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BlocBuilder<AuthorizedUserCubit, List<AuthorizedUser>>(
+          builder: (context, authorizedUsers) {
+            return BlocListener<IButtonDeviceBloc, Uint8List?>(
+              listener: (context, state) {
+                if (state != null) {
+                  final user = authorizedUsers.tryFirstWhere((user) => user.compareIButtonId(state));
+                  log.i('Trying to log in user ${user?.name}');
+                  if (user != null) {
+                    context.read<LoginCubit>().login(iButtonId: user.iButtonId, name: user.name);
+                  } else {
+                    final theme = Theme.of(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: const Text('You are not authorized!'),
+                      backgroundColor: theme.colorScheme.error,
+                    ));
+                  }
+                  context.read<IButtonDeviceBloc>().reset();
+                }
+              },
+              child: error == null
+                  ? Text(
+                      'Please log in using your iButton.',
+                      style: theme.textTheme.headlineLarge,
+                    )
+                  : Center(
+                      child: Card(
+                        child: Text(
+                          error,
+                          style: theme.textTheme.headlineLarge?.copyWith(color: theme.colorScheme.error),
+                        ),
+                      ),
+                    ),
+            );
+          },
+        ),
+        const SizedBox(
+          height: 16,
+        ),
+        if (lastCosts != null && lastCosts > 0)
+          Text('Last job: € ${(lastCosts / 100).toStringAsFixed(2)} (operator $lastName)'),
+      ],
     );
   }
 }

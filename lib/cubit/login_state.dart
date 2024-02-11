@@ -21,6 +21,7 @@ final class LoggedIn extends LoginState {
     required this.startLaserEnergy,
     required this.pollTimer,
     this.extern = false,
+    this.currentlyActive = false,
   });
 
   final Uint8List iButtonId;
@@ -30,4 +31,11 @@ final class LoggedIn extends LoginState {
   final double startLaserEnergy;
   final Timer pollTimer;
   final bool extern;
+  final bool currentlyActive;
+}
+
+final class ConnectionFailed extends LoginState {
+  const ConnectionFailed(this.message);
+
+  final String message;
 }

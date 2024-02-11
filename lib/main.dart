@@ -35,44 +35,13 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         home: BlocBuilder<LoginCubit, LoginState>(
           builder: (context, state) {
-            final theme = Theme.of(context);
-
             return Scaffold(
               appBar: AppBar(
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: state is LoggedIn
-                      ? [
-                          state.extern
-                              ? Text('Responsible: ${state.name}')
-                              : Text('Accountable Operator: ${state.name}'),
-                          const SizedBox(width: 8),
-                          if (!state.extern)
-                            IconButton(
-                                onPressed: () {
-                                  context.read<LoginCubit>().setExtern();
-                                },
-                                icon: Image.asset(
-                                  'assets/alien-head.png',
-                                  height: 32,
-                                  color: theme.colorScheme.primary,
-                                )),
-                        ]
-                      : [const Text('Laserauth')],
-                ),
-                actions: [
-                  state is LoggedOut
-                      ? const SizedBox()
-                      : IconButton(
-                          onPressed: () {
-                            context.read<LoginCubit>().logout();
-                          },
-                          icon: Icon(
-                            Icons.power_off,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                ],
+                title: state is LoggedIn
+                    ? state.extern
+                        ? Text('Responsible: ${state.name}')
+                        : Text('Accountable Operator: ${state.name}')
+                    : const Text('Laserauth'),
               ),
               body: Content(
                 configuration: configuration,

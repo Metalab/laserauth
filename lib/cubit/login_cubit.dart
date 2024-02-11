@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart';
 import 'package:laserauth/api.dart';
 import 'package:laserauth/config.dart';
 import 'package:laserauth/log.dart';
@@ -31,7 +32,7 @@ class LoginCubit extends Cubit<LoginState> {
     }
   }
 
-  void setExtern() {
+  void setExtern({required bool extern}) {
     switch (state) {
       case LoggedIn(
           :final iButtonId,
@@ -49,9 +50,10 @@ class LoginCubit extends Cubit<LoginState> {
           laserSeconds: laserSeconds,
           laserEnergy: laserEnergy,
           startLaserEnergy: startLaserEnergy,
-          extern: true,
+          extern: extern,
         ));
       case LoggedOut():
+      case ConnectionFailed():
       // nothing to do
     }
   }
@@ -67,6 +69,8 @@ class LoginCubit extends Cubit<LoginState> {
         ));
       case LoggedOut():
       // nothing to do
+      case ConnectionFailed():
+      // nothing to do
     }
     setPowerStatus(power: false, powerMeterIP: configuration.powerMeterIP, password: configuration.password);
   }
@@ -77,6 +81,7 @@ class LoginCubit extends Cubit<LoginState> {
       log.d('Status: $response');
       switch (state) {
         case LoggedOut():
+        case ConnectionFailed():
           t.cancel();
           return;
         case LoggedIn(
@@ -86,7 +91,8 @@ class LoginCubit extends Cubit<LoginState> {
             :final extern,
             :final startLaserEnergy,
           ):
-          if (response.power >= configuration.laserPowerMinimum) {
+          final bool currentlyActive = response.power >= configuration.laserPowerMinimum;
+          if (currentlyActive) {
             laserSeconds++;
           }
           emit(LoggedIn(
@@ -97,10 +103,12 @@ class LoginCubit extends Cubit<LoginState> {
             startLaserEnergy: startLaserEnergy,
             pollTimer: t,
             extern: extern,
+            currentlyActive: currentlyActive,
           ));
       }
-    } catch (e) {
+    } on ClientException catch (e) {
       log.e(e);
+      emit(ConnectionFailed(e.message));
     }
   }
 }
