@@ -2,32 +2,32 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart';
-import 'package:laserauth/api.dart';
+import 'package:flutter_gpiod/flutter_gpiod.dart';
 import 'package:laserauth/config.dart';
+import 'package:laserauth/hardware.dart';
 import 'package:laserauth/log.dart';
 import 'package:laserauth/price.dart';
 
 part 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
-  LoginCubit({required this.configuration}) : super(const LoggedOut());
+  LoginCubit({required this.configuration})
+      : hardware = Hardware(configuration),
+        super(const LoggedOut()) {
+    hardware.laserSenseStream.listen(_laserSenseChanged);
+  }
 
   final Configuration configuration;
+  final Hardware hardware;
 
   Future<void> login({required Uint8List iButtonId, required String name}) async {
-    final pollTimer = Timer.periodic(const Duration(seconds: 1), _pollLaserTime);
     try {
-      final status = await fetchStatus(powerMeterIP: configuration.powerMeterIP, password: configuration.password);
-
       emit(LoggedIn(
         iButtonId: iButtonId,
         name: name,
-        pollTimer: pollTimer,
-        startLaserEnergy: status.total,
         loginTime: DateTime.now().toUtc(),
       ));
-      setPowerStatus(power: true, powerMeterIP: configuration.powerMeterIP, password: configuration.password);
+      hardware.power = true;
     } on Error catch (e) {
       log.e(e.toString(), stackTrace: e.stackTrace);
     }
@@ -38,22 +38,18 @@ class LoginCubit extends Cubit<LoginState> {
       case LoggedIn(
           :final iButtonId,
           :final name,
-          :final laserSeconds,
-          :final laserEnergy,
-          :final startLaserEnergy,
-          :final pollTimer,
+          :final laserDuration,
           :final loginTime,
+          :final laserTubeTurnOnTimestamp
         ):
         log.i('Switch to extern');
         emit(LoggedIn(
           iButtonId: iButtonId,
           name: name,
-          pollTimer: pollTimer,
-          laserSeconds: laserSeconds,
-          laserEnergy: laserEnergy,
-          startLaserEnergy: startLaserEnergy,
+          laserDuration: laserDuration,
           extern: extern,
           loginTime: loginTime,
+          laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp,
         ));
       case LoggedOut():
       case ConnectionFailed():
@@ -63,11 +59,10 @@ class LoginCubit extends Cubit<LoginState> {
 
   void logout() {
     switch (state) {
-      case LoggedIn(:final name, :final pollTimer, :final laserSeconds, :final extern):
-        pollTimer.cancel();
-        log.i('Logout $name with $laserSeconds seconds (extern $extern)');
+      case LoggedIn(:final name, :final laserDuration, :final extern):
+        log.i('Logout $name with $laserDuration (extern $extern)');
         emit(LoggedOut(
-          lastCosts: centsForLaserTime(laserSeconds, extern: extern, configuration: configuration),
+          lastCosts: centsForLaserTime(laserDuration, extern: extern, configuration: configuration),
           lastName: name,
         ));
       case LoggedOut():
@@ -75,45 +70,31 @@ class LoginCubit extends Cubit<LoginState> {
       case ConnectionFailed():
       // nothing to do
     }
-    setPowerStatus(power: false, powerMeterIP: configuration.powerMeterIP, password: configuration.password);
+    hardware.power = false;
   }
 
-  void _pollLaserTime(Timer t) async {
-    try {
-      final response = await fetchStatus(powerMeterIP: configuration.powerMeterIP, password: configuration.password);
-      log.d('Status: $response');
-      switch (state) {
-        case LoggedOut():
-        case ConnectionFailed():
-          t.cancel();
-          return;
-        case LoggedIn(
-            :final iButtonId,
-            :final name,
-            :var laserSeconds,
-            :final extern,
-            :final startLaserEnergy,
-            :final loginTime,
-          ):
-          final bool currentlyActive = response.power >= configuration.laserPowerMinimum;
-          if (currentlyActive && DateTime.now().toUtc().difference(loginTime) > configuration.laserStartupTime) {
-            laserSeconds++;
-          }
-          emit(LoggedIn(
-            iButtonId: iButtonId,
-            name: name,
-            laserSeconds: laserSeconds,
-            laserEnergy: response.total - startLaserEnergy,
-            startLaserEnergy: startLaserEnergy,
-            pollTimer: t,
-            extern: extern,
-            currentlyActive: currentlyActive,
-            loginTime: loginTime,
-          ));
+  void _laserSenseChanged(SignalEvent event) {
+    final state = this.state; // avoid having to cast this after the type check every time
+    if (state is LoggedIn) {
+      if (event.edge == SignalEdge.falling && state.laserTubeTurnOnTimestamp != null) {
+        emit(LoggedIn(
+          iButtonId: state.iButtonId,
+          name: state.name,
+          loginTime: state.loginTime,
+          laserDuration: state.laserDuration + (event.timestamp - state.laserTubeTurnOnTimestamp!),
+          laserTubeTurnOnTimestamp: null,
+          extern: state.extern,
+        ));
+      } else if (event.edge == SignalEdge.rising && state.laserTubeTurnOnTimestamp == null) {
+        emit(LoggedIn(
+          iButtonId: state.iButtonId,
+          name: state.name,
+          loginTime: state.loginTime,
+          laserDuration: state.laserDuration,
+          laserTubeTurnOnTimestamp: event.timestamp,
+          extern: state.extern,
+        ));
       }
-    } on ClientException catch (e) {
-      log.e(e);
-      emit(ConnectionFailed(e.message));
     }
   }
 }

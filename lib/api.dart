@@ -9,60 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:laserauth/log.dart';
 import 'package:laserauth/util.dart';
 
-final class Status {
-  final DateTime time;
-  final DateTime totalStartTime;
-  final double total;
-  final double yesterday;
-  final double today;
-  final int power;
-  final int apparentPower;
-  final int reactivePower;
-  final double factor;
-  final int voltage;
-  final double current;
-
-  const Status({
-    required this.time,
-    required this.totalStartTime,
-    required this.total,
-    required this.yesterday,
-    required this.today,
-    required this.power,
-    required this.apparentPower,
-    required this.reactivePower,
-    required this.factor,
-    required this.voltage,
-    required this.current,
-  });
-
-  Status.fromJson(Map<String, dynamic> json)
-      : time = DateTime.parse(json['Time'] as String),
-        totalStartTime = DateTime.parse((json['ENERGY'] as Map<String, dynamic>)['TotalStartTime'] as String),
-        total = (json['ENERGY'] as Map<String, dynamic>)['Total'],
-        yesterday = (json['ENERGY'] as Map<String, dynamic>)['Yesterday'],
-        today = (json['ENERGY'] as Map<String, dynamic>)['Today'],
-        power = (json['ENERGY'] as Map<String, dynamic>)['Power'],
-        apparentPower = (json['ENERGY'] as Map<String, dynamic>)['ApparentPower'],
-        reactivePower = (json['ENERGY'] as Map<String, dynamic>)['ReactivePower'],
-        factor = (json['ENERGY'] as Map<String, dynamic>)['Factor'],
-        voltage = (json['ENERGY'] as Map<String, dynamic>)['Voltage'],
-        current = (json['ENERGY'] as Map<String, dynamic>)['Current'];
-}
-
-Future<Status> fetchStatus({required String powerMeterIP, required String password}) async {
-  final url = Uri.http(powerMeterIP, 'cm', {'cmnd': 'Status 10', 'user': 'admin', 'password': password});
-  final response = await http.get(url);
-  final json = jsonDecode(response.body);
-
-  return Status.fromJson(json['StatusSNS']);
-}
-
-Future<void> setPowerStatus({required bool power, required String powerMeterIP, required String password}) async {
-  final url = Uri.http(powerMeterIP, 'cm', {'cmnd': 'Power $power', 'user': 'admin', 'password': password});
-  await http.get(url);
-}
-
 final class AuthorizedUser {
   final String name;
   final Uint8List iButtonId;
@@ -97,7 +43,7 @@ List<AuthorizedUser> parseData(Uint8List data) {
       .toList(growable: false);
 }
 
-Stream<List<AuthorizedUser>> userList(String updateUrl) async* {
+Stream<List<AuthorizedUser>> userList(String updateUrl, String authToken) async* {
   Uint8List? data;
   try {
     data = await File(iButtonFile).readAsBytes();
@@ -118,7 +64,9 @@ Stream<List<AuthorizedUser>> userList(String updateUrl) async* {
   while (true) {
     var failed = true;
     try {
-      final response = await http.get(Uri.parse(updateUrl));
+      final response = await http.get(Uri.parse(updateUrl), headers: {
+        'X-TOKEN': authToken,
+      });
       if (response.statusCode == 200) {
         failed = false;
 

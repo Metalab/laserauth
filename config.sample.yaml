@@ -1,7 +1,7 @@
-updateUrl: "https://metalab.at/ibuttons" # MOS REST URL
+updateUrl: "https://metalab.at/things/keys/THING" # MOS REST URL
+logUrl: "https://metalab.at/things/usage/THING" # MOS REST URL
+authToken: "get_this_from_vorstand"
 pricePerMinute: 100 # in Eurocents
 externPricePerMinute: 150 # in Eurocents
-laserPowerMinimum: 260 # in W
-laserStartupTime: 20 # in seconds
-powerMeterIP: "laserauth.lan"
-password: "*******"
+powerPin: 23 # output BCM pin number
+laserSensePin: 24 # input BCM pin number

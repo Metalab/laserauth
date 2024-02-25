@@ -9,33 +9,33 @@ import 'package:yaml/yaml.dart';
 
 @immutable
 final class Configuration {
-  final int laserPowerMinimum;
-  final String powerMeterIP;
   final String updateUrl;
+  final String authToken;
+  final String logUrl;
   final int pricePerMinute;
   final int externPricePerMinute;
-  final String password;
-  final Duration laserStartupTime;
+  final int powerPin;
+  final int laserSensePin;
 
   const Configuration({
-    required this.laserPowerMinimum,
-    required this.powerMeterIP,
     required this.updateUrl,
+    required this.authToken,
+    required this.logUrl,
     required this.pricePerMinute,
     required this.externPricePerMinute,
-    required this.password,
-    required this.laserStartupTime,
+    required this.powerPin,
+    required this.laserSensePin,
   });
 
   factory Configuration.fromJson(Map<dynamic, dynamic> json) {
     return Configuration(
-      laserPowerMinimum: json['laserPowerMinimum'] as int,
-      powerMeterIP: json['powerMeterIP'] as String,
       updateUrl: json['updateUrl'] as String,
+      authToken: json['authToken'] as String,
+      logUrl: json['logUrl'] as String,
       pricePerMinute: json['pricePerMinute'] as int,
       externPricePerMinute: json['externPricePerMinute'] as int,
-      password: json['password'] as String,
-      laserStartupTime: Duration(seconds: json['laserStartupTime'] as int),
+      powerPin: json['powerPin'] as int,
+      laserSensePin: json['laserSensePin'] as int,
     );
   }
 }

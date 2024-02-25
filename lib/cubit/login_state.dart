@@ -16,24 +16,18 @@ final class LoggedIn extends LoginState {
   const LoggedIn({
     required this.iButtonId,
     required this.name,
-    this.laserSeconds = 0,
-    this.laserEnergy = 0,
-    required this.startLaserEnergy,
-    required this.pollTimer,
+    this.laserDuration = Duration.zero,
     this.extern = false,
-    this.currentlyActive = false,
+    this.laserTubeTurnOnTimestamp,
     required this.loginTime,
   });
 
   final Uint8List iButtonId;
   final String name;
-  final int laserSeconds;
-  final double laserEnergy;
-  final double startLaserEnergy;
-  final Timer pollTimer;
+  final Duration laserDuration;
   final bool extern;
-  final bool currentlyActive;
   final DateTime loginTime;
+  final Duration? laserTubeTurnOnTimestamp;
 }
 
 final class ConnectionFailed extends LoginState {

@@ -4,6 +4,6 @@ import 'package:laserauth/config.dart';
 
 class AuthorizedUserCubit extends Cubit<List<AuthorizedUser>> {
   AuthorizedUserCubit({required Configuration configuration}) : super(const []) {
-    userList(configuration.updateUrl).listen(emit);
+    userList(configuration.updateUrl, configuration.authToken).listen(emit);
   }
 }

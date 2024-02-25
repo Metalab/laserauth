@@ -23,7 +23,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final laserTimeLabel = ConstraintId('lasertime');
-  final powerLabel = ConstraintId('power');
   final costsLabel = ConstraintId('costs');
 
   @override
@@ -34,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
       builder: (context, state) => switch (state) {
         LoggedOut(:final lastCosts, :final lastName) => logoutScreen(context, lastCosts: lastCosts, lastName: lastName),
         ConnectionFailed(:final message) => logoutScreen(context, error: message),
-        LoggedIn(:final laserSeconds, :final laserEnergy, :final extern, :final currentlyActive) => Center(
+        LoggedIn(:final laserDuration, :final extern, :final laserTubeTurnOnTimestamp) => Center(
             child: Card(
               child: DefaultTextStyle(
                 style: theme.textTheme.headlineLarge!,
@@ -43,34 +42,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Text('Laser time:').applyConstraint(
                       id: laserTimeLabel,
                       right: parent.center.margin(4),
-                      bottom: powerLabel.top.margin(8),
+                      bottom: parent.top.margin(8),
                     ),
-                    Text('${laserSeconds ~/ 60} min ${(laserSeconds % 60).toString().padLeft(2, '0')} sec')
+                    Text('${laserDuration.inMinutes} min ${(laserDuration.inSeconds % 60).toString().padLeft(2, '0')} sec')
                         .applyConstraint(
                       left: parent.center.margin(4),
                       baseline: laserTimeLabel.baseline,
                     ),
-                    const Text('Energy usage:').applyConstraint(
-                      id: powerLabel,
-                      centerVerticalTo: parent,
-                      right: parent.center.margin(4),
-                    ),
-                    Text('${(laserEnergy * 1000).round()} Wh').applyConstraint(
-                      left: parent.center.margin(4),
-                      baseline: powerLabel.baseline,
-                    ),
                     const Text('Costs:').applyConstraint(
                       id: costsLabel,
                       right: parent.center.margin(4),
-                      top: powerLabel.bottom.margin(4),
+                      top: laserTimeLabel.bottom.margin(4),
                     ),
                     Text(
-                      '€ ${(centsForLaserTime(laserSeconds, extern: extern, configuration: widget.configuration) / 100).toStringAsFixed(2)}',
+                      '€ ${(centsForLaserTime(laserDuration, extern: extern, configuration: widget.configuration) / 100).toStringAsFixed(2)}',
                     ).applyConstraint(
                       left: parent.center.margin(4),
                       baseline: costsLabel.baseline,
                     ),
-                    if (!currentlyActive)
+                    if (laserTubeTurnOnTimestamp == null)
                       FilledButton(
                         onPressed: () {
                           context.read<LoginCubit>().logout();
