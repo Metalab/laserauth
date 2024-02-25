@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
@@ -48,14 +49,14 @@ Stream<List<AuthorizedUser>> userList(String updateUrl, String authToken) async*
   try {
     data = await File(iButtonFile).readAsBytes();
   } catch (e) {
-    log.e(e);
+    log.severe(e);
   }
 
   if (data != null) {
     try {
       yield parseData(data);
     } catch (e) {
-      log.e(e);
+      log.severe(e);
       return;
     }
   }
@@ -77,15 +78,46 @@ Stream<List<AuthorizedUser>> userList(String updateUrl, String authToken) async*
           digest = newDigest;
           yield parseData(body);
           unawaited(File(iButtonFile).writeAsBytes(body).catchError((e) {
-            log.e(e);
+            log.severe(e);
             throw e;
           }));
         }
       }
     } catch (e) {
-      log.e(e);
+      log.severe(e);
     }
 
     await Future.delayed(failed ? const Duration(minutes: 10) : const Duration(hours: 1));
+  }
+}
+
+final class ServerLogger {
+  final Queue<ThingEvent> _logEvents = Queue();
+  final Uri logUri;
+  final String token;
+
+  ServerLogger({required this.logUri, required this.token});
+
+  void sendLogEvent(ThingEvent event) {
+    _logEvents.add(event);
+
+    unawaited(flush());
+  }
+
+  Future<void> flush() async {
+    while (_logEvents.isNotEmpty) {
+      final e = _logEvents.removeFirst();
+      try {
+        await http.post(
+          logUri,
+          headers: {
+            'X-TOKEN': token,
+          },
+          body: e,
+        );
+      } catch (e) {
+        log.severe(e);
+      }
+    }
   }
 }

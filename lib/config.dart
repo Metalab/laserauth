@@ -45,7 +45,7 @@ Future<Configuration> readConfigFile() async {
   try {
     data = await File(configFile).readAsBytes();
   } catch (e) {
-    log.e(e);
+    log.severe(e);
     rethrow;
   }
 

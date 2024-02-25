@@ -35,7 +35,7 @@ class LoginCubit extends Cubit<LoginState> {
       ));
       hardware.power = true;
     } on Error catch (e) {
-      log.e(e.toString(), stackTrace: e.stackTrace);
+      log.severe(e.toString(), e, e.stackTrace);
     }
   }
 
@@ -48,7 +48,7 @@ class LoginCubit extends Cubit<LoginState> {
           :final loginTime,
           :final laserTubeTurnOnTimestamp
         ):
-        log.i('Switch to extern');
+        log.info('Switch to extern');
         emit(LoggedIn(
           iButtonId: iButtonId,
           name: name,
@@ -66,7 +66,12 @@ class LoginCubit extends Cubit<LoginState> {
   void logout() {
     switch (state) {
       case LoggedIn(:final name, :final laserDuration, :final extern):
-        log.i('Logout $name with $laserDuration (extern $extern)');
+        log.info(ThingEvent(
+          kind: extern ? EventKind.usageNonmember : EventKind.usageMember,
+          user: name,
+          usageSeconds: laserDuration.inSeconds,
+        ));
+        log.info(ThingEvent(kind: EventKind.logout, user: name));
         emit(LoggedOut(
           lastCosts: centsForLaserTime(laserDuration, extern: extern, configuration: configuration),
           lastName: name,
