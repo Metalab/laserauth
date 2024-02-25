@@ -17,6 +17,12 @@ class LoginCubit extends Cubit<LoginState> {
     hardware.laserSenseStream.listen(_laserSenseChanged);
   }
 
+  @override
+  Future<void> close() {
+    hardware.dispose();
+    return super.close();
+  }
+
   final Configuration configuration;
   final Hardware hardware;
 
