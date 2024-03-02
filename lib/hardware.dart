@@ -1,5 +1,5 @@
 import 'package:flutter_gpiod/flutter_gpiod.dart';
-import 'package:laserauth/config.dart';
+import 'package:laserauth/cubit/configuration_state.dart';
 
 class Hardware {
   Hardware(Configuration configuration) {

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gpiod/flutter_gpiod.dart';
-import 'package:laserauth/config.dart';
+import 'package:laserauth/cubit/configuration_state.dart';
 import 'package:laserauth/hardware.dart';
 import 'package:laserauth/log.dart';
 import 'package:laserauth/price.dart';
@@ -31,7 +31,6 @@ class LoginCubit extends Cubit<LoginState> {
       emit(LoggedIn(
         iButtonId: iButtonId,
         name: name,
-        loginTime: DateTime.now().toUtc(),
       ));
       hardware.power = true;
     } on Error catch (e) {
@@ -39,46 +38,67 @@ class LoginCubit extends Cubit<LoginState> {
     }
   }
 
-  void setExtern({required bool extern}) {
+  void loginMember({required String memberName}) {
     switch (state) {
-      case LoggedIn(
-          :final iButtonId,
-          :final name,
-          :final laserDuration,
-          :final loginTime,
-          :final laserTubeTurnOnTimestamp
-        ):
-        log.info('Switch to extern');
-        emit(LoggedIn(
+      case LoggedIn(:final iButtonId, :final laserDuration, :final laserTubeTurnOnTimestamp, :final name):
+        log.info('Switch to member');
+        emit(LoggedInMember(
           iButtonId: iButtonId,
           name: name,
+          memberName: memberName,
           laserDuration: laserDuration,
-          extern: extern,
-          loginTime: loginTime,
           laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp,
         ));
       case LoggedOut():
-      case ConnectionFailed():
+      // Nothing to do
+    }
+  }
+
+  void loginExtern() {
+    switch (state) {
+      case LoggedIn(:final iButtonId, :final name, :final laserDuration, :final laserTubeTurnOnTimestamp):
+        log.info('Switch to extern');
+        emit(LoggedInExtern(
+          iButtonId: iButtonId,
+          name: name,
+          laserDuration: laserDuration,
+          laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp,
+        ));
+      case LoggedOut():
       // nothing to do
     }
   }
 
   void logout() {
     switch (state) {
-      case LoggedIn(:final name, :final laserDuration, :final extern):
+      case LoggedInExtern(:final name, :final laserDuration):
         log.info(ThingEvent(
-          kind: extern ? EventKind.usageNonmember : EventKind.usageMember,
+          kind: EventKind.usageNonmember,
           user: name,
           usageSeconds: laserDuration.inSeconds,
         ));
         log.info(ThingEvent(kind: EventKind.logout, user: name));
         emit(LoggedOut(
-          lastCosts: centsForLaserTime(laserDuration, extern: extern, configuration: configuration),
+          lastCosts: centsForLaserTime(laserDuration, extern: true, configuration: configuration),
+          lastName: name,
+        ));
+      case LoggedInMember(:final name, :final laserDuration):
+        log.info(ThingEvent(
+          kind: EventKind.usageMember,
+          user: name,
+          usageSeconds: laserDuration.inSeconds,
+        ));
+        log.info(ThingEvent(kind: EventKind.logout, user: name));
+        emit(LoggedOut(
+          lastCosts: centsForLaserTime(laserDuration, extern: false, configuration: configuration),
+          lastName: name,
+        ));
+      case LoggedIn(:final name):
+        emit(LoggedOut(
+          lastCosts: 0,
           lastName: name,
         ));
       case LoggedOut():
-      // nothing to do
-      case ConnectionFailed():
       // nothing to do
     }
     hardware.power = false;
@@ -88,22 +108,14 @@ class LoginCubit extends Cubit<LoginState> {
     final state = this.state; // avoid having to cast this after the type check every time
     if (state is LoggedIn) {
       if (event.edge == SignalEdge.falling && state.laserTubeTurnOnTimestamp != null) {
-        emit(LoggedIn(
-          iButtonId: state.iButtonId,
-          name: state.name,
-          loginTime: state.loginTime,
+        emit(state.copyWith(
           laserDuration: state.laserDuration + (event.timestamp - state.laserTubeTurnOnTimestamp!),
           laserTubeTurnOnTimestamp: null,
-          extern: state.extern,
         ));
       } else if (event.edge == SignalEdge.rising && state.laserTubeTurnOnTimestamp == null) {
-        emit(LoggedIn(
-          iButtonId: state.iButtonId,
-          name: state.name,
-          loginTime: state.loginTime,
+        emit(state.copyWith(
           laserDuration: state.laserDuration,
           laserTubeTurnOnTimestamp: event.timestamp,
-          extern: state.extern,
         ));
       }
     }

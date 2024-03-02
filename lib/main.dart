@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:laserauth/api.dart';
 import 'package:laserauth/bloc/i_button_device_bloc.dart';
-import 'package:laserauth/config.dart';
+import 'package:laserauth/cubit/configuration_cubit.dart';
+import 'package:laserauth/cubit/configuration_state.dart';
 import 'package:laserauth/content.dart';
 import 'package:laserauth/cubit/authorized_user_cubit.dart';
 import 'package:laserauth/cubit/login_cubit.dart';
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => LoginCubit(configuration: configuration)),
         BlocProvider.value(value: iButtonDevices),
         BlocProvider(create: (_) => AuthorizedUserCubit(configuration: configuration)),
+        BlocProvider(create: (_) => ConfigurationCubit(configuration)),
       ],
       child: MaterialApp(
         title: 'Laserauth',
@@ -53,15 +55,15 @@ class MyApp extends StatelessWidget {
           builder: (context, state) {
             return Scaffold(
               appBar: AppBar(
-                title: state is LoggedIn
-                    ? state.extern
-                        ? Text('Responsible: ${state.name}')
-                        : Text('Accountable Operator: ${state.name}')
-                    : const Text('Laserauth'),
+                title: switch (state) {
+                  LoggedOut() => const Text('Laserauth'),
+                  LoggedInExtern(:final name) => Text('Responsible: $name'),
+                  LoggedInMember(:final name, :final memberName) =>
+                    Text('Accountable operator $name, payable by $memberName'),
+                  LoggedIn() => const Text('Laserauth Login'),
+                },
               ),
-              body: Content(
-                configuration: configuration,
-              ),
+              body: const Content(),
             );
           },
         ),

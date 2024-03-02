@@ -17,21 +17,76 @@ final class LoggedIn extends LoginState {
     required this.iButtonId,
     required this.name,
     this.laserDuration = Duration.zero,
-    this.extern = false,
     this.laserTubeTurnOnTimestamp,
-    required this.loginTime,
   });
 
   final Uint8List iButtonId;
-  final String name;
   final Duration laserDuration;
-  final bool extern;
-  final DateTime loginTime;
   final Duration? laserTubeTurnOnTimestamp;
+  final String name;
+
+  LoggedIn copyWith({
+    Uint8List? iButtonId,
+    Duration? laserDuration,
+    Duration? laserTubeTurnOnTimestamp,
+    String? name,
+  }) =>
+      LoggedIn(
+        iButtonId: iButtonId ?? this.iButtonId,
+        laserDuration: laserDuration ?? this.laserDuration,
+        laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp ?? this.laserTubeTurnOnTimestamp,
+        name: name ?? this.name,
+      );
 }
 
-final class ConnectionFailed extends LoginState {
-  const ConnectionFailed(this.message);
+final class LoggedInExtern extends LoggedIn {
+  const LoggedInExtern({
+    required super.iButtonId,
+    required super.name,
+    super.laserDuration = Duration.zero,
+    super.laserTubeTurnOnTimestamp,
+  });
 
-  final String message;
+  @override
+  LoggedIn copyWith({
+    Uint8List? iButtonId,
+    Duration? laserDuration,
+    DateTime? loginTime,
+    Duration? laserTubeTurnOnTimestamp,
+    String? name,
+  }) =>
+      LoggedInExtern(
+        iButtonId: iButtonId ?? this.iButtonId,
+        laserDuration: laserDuration ?? this.laserDuration,
+        laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp ?? this.laserTubeTurnOnTimestamp,
+        name: name ?? this.name,
+      );
+}
+
+final class LoggedInMember extends LoggedIn {
+  const LoggedInMember({
+    required super.iButtonId,
+    required super.name,
+    required this.memberName,
+    super.laserDuration = Duration.zero,
+    super.laserTubeTurnOnTimestamp,
+  });
+
+  final String memberName;
+
+  @override
+  LoggedIn copyWith({
+    Uint8List? iButtonId,
+    Duration? laserDuration,
+    Duration? laserTubeTurnOnTimestamp,
+    String? name,
+    String? memberName,
+  }) =>
+      LoggedInMember(
+        iButtonId: iButtonId ?? this.iButtonId,
+        laserDuration: laserDuration ?? this.laserDuration,
+        laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp ?? this.laserTubeTurnOnTimestamp,
+        name: name ?? this.name,
+        memberName: memberName ?? this.memberName,
+      );
 }
