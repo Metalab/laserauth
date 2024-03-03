@@ -44,7 +44,6 @@ class LoginCubit extends Cubit<LoginState> {
         name: name,
       ));
       log.info(ThingEvent(kind: EventKind.login, user: name));
-      hardware.power = true;
       _resetIdleTimer();
     } on Error catch (e) {
       log.severe(e.toString(), e, e.stackTrace);
@@ -76,6 +75,7 @@ class LoginCubit extends Cubit<LoginState> {
         ):
         log.info('Switch to member');
         _resetIdleTimer();
+        hardware.power = true;
         emit(LoggedInMember(
           iButtonId: iButtonId,
           name: name,
@@ -100,6 +100,7 @@ class LoginCubit extends Cubit<LoginState> {
         ):
         log.info('Switch to extern');
         _resetIdleTimer();
+        hardware.power = true;
         emit(LoggedInExtern(
           iButtonId: iButtonId,
           name: name,
