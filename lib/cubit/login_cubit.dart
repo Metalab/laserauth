@@ -20,11 +20,14 @@ class LoginCubit extends Cubit<LoginState> {
   @override
   Future<void> close() {
     hardware.dispose();
+    _updateServerTimer?.cancel();
+    _updateServerTimer = null;
     return super.close();
   }
 
   final Configuration configuration;
   final Hardware hardware;
+  Timer? _updateServerTimer;
 
   Future<void> login({required Uint8List iButtonId, required String name}) async {
     try {
@@ -98,22 +101,28 @@ class LoginCubit extends Cubit<LoginState> {
 
   void logout() {
     switch (state) {
-      case LoggedInExtern(:final name, :final laserDuration):
+      case LoggedInExtern(:final name, :var laserDuration, :final laserTubeTurnOnTime, :final serverSubmittedDuration):
+        if (laserTubeTurnOnTime != null) {
+          laserDuration = DateTime.now().difference(laserTubeTurnOnTime);
+        }
         log.info(ThingEvent(
           kind: EventKind.usageNonmember,
           user: name,
-          usageSeconds: laserDuration.inSeconds,
+          usageSeconds: (laserDuration - serverSubmittedDuration).inSeconds,
         ));
         log.info(ThingEvent(kind: EventKind.logout, user: name));
         emit(LoggedOut(
           lastCosts: centsForLaserTime(laserDuration, extern: true, configuration: configuration),
           lastName: name,
         ));
-      case LoggedInMember(:final name, :final laserDuration):
+      case LoggedInMember(:final name, :var laserDuration, :final laserTubeTurnOnTime, :final serverSubmittedDuration):
+        if (laserTubeTurnOnTime != null) {
+          laserDuration = DateTime.now().difference(laserTubeTurnOnTime);
+        }
         log.info(ThingEvent(
           kind: EventKind.usageMember,
           user: name,
-          usageSeconds: laserDuration.inSeconds,
+          usageSeconds: (laserDuration - serverSubmittedDuration).inSeconds,
         ));
         log.info(ThingEvent(kind: EventKind.logout, user: name));
         emit(LoggedOut(
@@ -131,6 +140,29 @@ class LoginCubit extends Cubit<LoginState> {
     hardware.power = false;
   }
 
+  void _updateServerTime(Timer timer) {
+    final state = this.state; // avoid having to cast this after the type check every time
+    if (state is LoggedInExtern || state is LoggedInMember) {
+      final duration = (state as LoggedIn).laserDuration - state.serverSubmittedDuration;
+      if (duration > const Duration(seconds: 1)) {
+        if (state is LoggedInMember) {
+          log.info(ThingEvent(
+            kind: EventKind.usageMember,
+            user: state.memberName,
+            usageSeconds: duration.inSeconds,
+          ));
+        } else if (state is LoggedInExtern) {
+          log.info(ThingEvent(
+            kind: EventKind.usageNonmember,
+            user: state.name,
+            usageSeconds: duration.inSeconds,
+          ));
+        }
+        emit(state.copyWith(serverSubmittedDuration: state.laserDuration));
+      }
+    }
+  }
+
   void _laserSenseChanged(SignalEvent event) {
     log.fine('Laser sense changed: $event');
     final state = this.state; // avoid having to cast this after the type check every time
@@ -141,12 +173,17 @@ class LoginCubit extends Cubit<LoginState> {
           laserTubeTurnOnTimestamp: null,
           laserTubeTurnOnTime: null,
         ));
+        _updateServerTimer ??= Timer.periodic(const Duration(minutes: 1), _updateServerTime);
       } else if (event.edge == SignalEdge.falling && state.laserTubeTurnOnTimestamp == null) {
         emit(state.updateTime(
           laserDuration: state.laserDuration,
           laserTubeTurnOnTimestamp: event.timestamp,
           laserTubeTurnOnTime: event.time,
         ));
+        if (_updateServerTimer != null) {
+          _updateServerTimer!.cancel();
+          _updateServerTimer = null;
+        }
       }
     }
   }
