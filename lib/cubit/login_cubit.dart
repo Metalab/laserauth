@@ -53,7 +53,13 @@ class LoginCubit extends Cubit<LoginState> {
 
   void loginMember({required String memberName}) {
     switch (state) {
-      case LoggedIn(:final iButtonId, :final laserDuration, :final laserTubeTurnOnTimestamp, :final name):
+      case LoggedIn(
+          :final iButtonId,
+          :final laserDuration,
+          :final laserTubeTurnOnTimestamp,
+          :final laserTubeTurnOnTime,
+          :final name
+        ):
         log.info('Switch to member');
         emit(LoggedInMember(
           iButtonId: iButtonId,
@@ -61,6 +67,7 @@ class LoginCubit extends Cubit<LoginState> {
           memberName: memberName,
           laserDuration: laserDuration,
           laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp,
+          laserTubeTurnOnTime: laserTubeTurnOnTime,
         ));
       case LoggedOut():
       // Nothing to do
@@ -69,13 +76,20 @@ class LoginCubit extends Cubit<LoginState> {
 
   void loginExtern() {
     switch (state) {
-      case LoggedIn(:final iButtonId, :final name, :final laserDuration, :final laserTubeTurnOnTimestamp):
+      case LoggedIn(
+          :final iButtonId,
+          :final name,
+          :final laserDuration,
+          :final laserTubeTurnOnTimestamp,
+          :final laserTubeTurnOnTime
+        ):
         log.info('Switch to extern');
         emit(LoggedInExtern(
           iButtonId: iButtonId,
           name: name,
           laserDuration: laserDuration,
           laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp,
+          laserTubeTurnOnTime: laserTubeTurnOnTime,
         ));
       case LoggedOut():
       // nothing to do
@@ -118,17 +132,20 @@ class LoginCubit extends Cubit<LoginState> {
   }
 
   void _laserSenseChanged(SignalEvent event) {
+    log.fine('Laser sense changed: $event');
     final state = this.state; // avoid having to cast this after the type check every time
     if (state is LoggedIn) {
-      if (event.edge == SignalEdge.falling && state.laserTubeTurnOnTimestamp != null) {
-        emit(state.copyWith(
+      if (event.edge == SignalEdge.rising && state.laserTubeTurnOnTimestamp != null) {
+        emit(state.updateTime(
           laserDuration: state.laserDuration + (event.timestamp - state.laserTubeTurnOnTimestamp!),
           laserTubeTurnOnTimestamp: null,
+          laserTubeTurnOnTime: null,
         ));
-      } else if (event.edge == SignalEdge.rising && state.laserTubeTurnOnTimestamp == null) {
-        emit(state.copyWith(
+      } else if (event.edge == SignalEdge.falling && state.laserTubeTurnOnTimestamp == null) {
+        emit(state.updateTime(
           laserDuration: state.laserDuration,
           laserTubeTurnOnTimestamp: event.timestamp,
+          laserTubeTurnOnTime: event.time,
         ));
       }
     }
