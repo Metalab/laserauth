@@ -20,7 +20,8 @@ class _LaserScreenState extends State<LaserScreen> {
   final costsLabel = ConstraintId('costs');
   final guidelineLabel = ConstraintId('guideline');
 
-  var _currentTime = Duration.zero; // only temporary until the laser is off again
+  // only temporary until the laser is off again, just to display the current duration while the laser is in operation and not just update at the end
+  var _currentTime = Duration.zero;
   Timer? _displayUpdateTimer;
 
   @override
