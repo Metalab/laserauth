@@ -22,12 +22,20 @@ class LoginCubit extends Cubit<LoginState> {
     hardware.dispose();
     _updateServerTimer?.cancel();
     _updateServerTimer = null;
+    _loginIdleTimer?.cancel();
+    _loginIdleTimer = null;
     return super.close();
   }
 
   final Configuration configuration;
   final Hardware hardware;
   Timer? _updateServerTimer;
+  Timer? _loginIdleTimer;
+
+  void _resetIdleTimer() {
+    _loginIdleTimer?.cancel();
+    _loginIdleTimer ??= Timer(Duration(minutes: configuration.idleLogoutMinutes), logout);
+  }
 
   Future<void> login({required Uint8List iButtonId, required String name}) async {
     try {
@@ -35,7 +43,9 @@ class LoginCubit extends Cubit<LoginState> {
         iButtonId: iButtonId,
         name: name,
       ));
+      log.info(ThingEvent(kind: EventKind.login, user: name));
       hardware.power = true;
+      _resetIdleTimer();
     } on Error catch (e) {
       log.severe(e.toString(), e, e.stackTrace);
     }
@@ -45,6 +55,7 @@ class LoginCubit extends Cubit<LoginState> {
     switch (state) {
       case LoggedIn(:final iButtonId, :final name):
         log.info('Switch to member input');
+        _resetIdleTimer();
         emit(LoggedInMemberInput(
           iButtonId: iButtonId,
           name: name,
@@ -64,6 +75,7 @@ class LoginCubit extends Cubit<LoginState> {
           :final name
         ):
         log.info('Switch to member');
+        _resetIdleTimer();
         emit(LoggedInMember(
           iButtonId: iButtonId,
           name: name,
@@ -87,6 +99,7 @@ class LoginCubit extends Cubit<LoginState> {
           :final laserTubeTurnOnTime
         ):
         log.info('Switch to extern');
+        _resetIdleTimer();
         emit(LoggedInExtern(
           iButtonId: iButtonId,
           name: name,
@@ -100,6 +113,9 @@ class LoginCubit extends Cubit<LoginState> {
   }
 
   void logout() {
+    _loginIdleTimer?.cancel();
+    _loginIdleTimer = null;
+
     switch (state) {
       case LoggedInExtern(:final name, :var laserDuration, :final laserTubeTurnOnTime, :final serverSubmittedDuration):
         if (laserTubeTurnOnTime != null) {
@@ -141,6 +157,10 @@ class LoginCubit extends Cubit<LoginState> {
   }
 
   void _updateServerTime(Timer timer) {
+    if (_loginIdleTimer != null) {
+      _resetIdleTimer();
+    }
+
     final state = this.state; // avoid having to cast this after the type check every time
     if (state is LoggedInExtern || state is LoggedInMember) {
       final duration = (state as LoggedIn).laserDuration - state.serverSubmittedDuration;
@@ -165,6 +185,10 @@ class LoginCubit extends Cubit<LoginState> {
 
   void _laserSenseChanged(SignalEvent event) {
     log.fine('Laser sense changed: $event');
+    if (_loginIdleTimer != null) {
+      _resetIdleTimer();
+    }
+
     final state = this.state; // avoid having to cast this after the type check every time
     if (state is LoggedIn) {
       if (event.edge == SignalEdge.rising && state.laserTubeTurnOnTimestamp != null) {

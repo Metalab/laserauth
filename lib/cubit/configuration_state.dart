@@ -16,6 +16,7 @@ final class Configuration {
   final int externPricePerMinute;
   final int powerPin;
   final int laserSensePin;
+  final int idleLogoutMinutes;
 
   const Configuration({
     required this.updateUrl,
@@ -25,6 +26,7 @@ final class Configuration {
     required this.externPricePerMinute,
     required this.powerPin,
     required this.laserSensePin,
+    required this.idleLogoutMinutes,
   });
 
   factory Configuration.fromJson(Map<dynamic, dynamic> json) {
@@ -36,6 +38,7 @@ final class Configuration {
       externPricePerMinute: json['externPricePerMinute'] as int,
       powerPin: json['powerPin'] as int,
       laserSensePin: json['laserSensePin'] as int,
+      idleLogoutMinutes: json['idleLogoutMinutes'] as int,
     );
   }
 }

@@ -29,10 +29,6 @@ class LogoutScreen extends StatelessWidget {
               listener: (context, state) {
                 if (state != null) {
                   final user = authorizedUsers.tryFirstWhere((user) => user.compareIButtonId(state));
-                  log.info(ThingEvent(
-                    kind: EventKind.login,
-                    user: user?.name,
-                  ));
                   if (user != null) {
                     context.read<LoginCubit>().login(iButtonId: user.iButtonId, name: user.name);
                   } else {

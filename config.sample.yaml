@@ -5,3 +5,4 @@ pricePerMinute: 100 # in Eurocents
 externPricePerMinute: 150 # in Eurocents
 powerPin: 23 # output BCM pin number
 laserSensePin: 24 # input BCM pin number
+idleLogoutMinutes: 10 # How much time with no actions in minutes until logout
