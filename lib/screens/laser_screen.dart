@@ -16,6 +16,7 @@ class LaserScreen extends StatefulWidget {
 class _LaserScreenState extends State<LaserScreen> {
   final laserTimeLabel = ConstraintId('lasertime');
   final costsLabel = ConstraintId('costs');
+  final guidelineLabel = ConstraintId('guideline');
 
   @override
   Widget build(BuildContext context) {
@@ -31,38 +32,41 @@ class _LaserScreenState extends State<LaserScreen> {
                 const Text('Laser time:').applyConstraint(
                   id: laserTimeLabel,
                   right: parent.center.margin(4),
-                  bottom: parent.top.margin(8),
+                  bottom: guidelineLabel.top.margin(8),
                 ),
-                if (state is LoggedIn)
-                  Text(
-                    '${state.laserDuration.inMinutes} min ${(state.laserDuration.inSeconds % 60).toString().padLeft(2, '0')} sec',
-                  ).applyConstraint(
-                    left: parent.center.margin(4),
-                    baseline: laserTimeLabel.baseline,
-                  ),
+                Text(
+                  '${(state as LoggedIn).laserDuration.inMinutes} min ${(state.laserDuration.inSeconds % 60).toString().padLeft(2, '0')} sec',
+                ).applyConstraint(
+                  left: parent.center.margin(4),
+                  baseline: laserTimeLabel.baseline,
+                ),
+                Guideline(
+                  id: guidelineLabel,
+                  horizontal: true,
+                  guidelinePercent: 0.5,
+                ),
                 const Text('Costs:').applyConstraint(
                   id: costsLabel,
                   right: parent.center.margin(4),
-                  top: laserTimeLabel.bottom.margin(4),
+                  top: guidelineLabel.bottom.margin(8),
                 ),
-                if (state is LoggedIn)
-                  BlocBuilder<ConfigurationCubit, Configuration>(
-                    builder: (context, configuration) => Text(
-                      '€ ${(centsForLaserTime(state.laserDuration, extern: state is LoggedInExtern, configuration: configuration) / 100).toStringAsFixed(2)}',
-                    ),
-                  ).applyConstraint(
-                    left: parent.center.margin(4),
-                    baseline: costsLabel.baseline,
+                BlocBuilder<ConfigurationCubit, Configuration>(
+                  builder: (context, configuration) => Text(
+                    '€ ${(centsForLaserTime(state.laserDuration, extern: state is LoggedInExtern, configuration: configuration) / 100).toStringAsFixed(2)}',
                   ),
-                if (state is LoggedIn && state.laserTubeTurnOnTimestamp == null)
+                ).applyConstraint(
+                  left: parent.center.margin(4),
+                  baseline: costsLabel.baseline,
+                ),
+                if (state.laserTubeTurnOnTimestamp == null)
                   FilledButton(
                     onPressed: () {
                       context.read<LoginCubit>().logout();
                     },
                     child: const Text('Log out'),
                   ).applyConstraint(
-                    right: parent.right.margin(8),
-                    bottom: parent.bottom.margin(8),
+                    right: parent.right.margin(16),
+                    bottom: parent.bottom.margin(16),
                   ),
               ],
             ),
