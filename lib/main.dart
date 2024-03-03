@@ -49,6 +49,13 @@ class MyApp extends StatelessWidget {
             seedColor: const Color(0xFF0B0835),
             brightness: Brightness.dark,
           ),
+          textTheme: const TextTheme(labelLarge: TextStyle(fontSize: 40), labelMedium: TextStyle(fontSize: 32)),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              textStyle: const TextStyle(fontSize: 30),
+              padding: const EdgeInsets.all(16),
+            ),
+          ),
         ),
         debugShowCheckedModeBanner: false,
         home: BlocBuilder<LoginCubit, LoginState>(

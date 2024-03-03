@@ -18,6 +18,7 @@ dependencies:
   http: ^1.2.0
   logging: ^1.2.0
   udev: ^0.0.3
+  virtual_keyboard_custom_layout: ^1.0.0
   yaml: ^3.1.2
 
 dev_dependencies:

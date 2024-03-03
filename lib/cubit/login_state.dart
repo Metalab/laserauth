@@ -63,6 +63,15 @@ final class LoggedInExtern extends LoggedIn {
       );
 }
 
+final class LoggedInMemberInput extends LoggedIn {
+  const LoggedInMemberInput({
+    required super.iButtonId,
+    required super.name,
+    super.laserDuration = Duration.zero,
+    super.laserTubeTurnOnTimestamp,
+  });
+}
+
 final class LoggedInMember extends LoggedIn {
   const LoggedInMember({
     required super.iButtonId,

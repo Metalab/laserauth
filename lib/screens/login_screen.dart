@@ -16,29 +16,30 @@ class LoginScreen extends StatelessWidget {
         child: Card(
           child: DefaultTextStyle(
               style: theme.textTheme.headlineLarge!,
-              child: Column(
-                children: [
-                  const Text('Who is this job for?'),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => context.read<LoginCubit>().loginMember(memberName: name),
-                    child: const Text('Myself'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      // TODO
-                    },
-                    child: const Text('Other member'),
-                  ),
-                  TextButton(
-                    onPressed: () => context.read<LoginCubit>().loginExtern(),
-                    child: const Text('External'),
-                  ),
-                  TextButton(
-                    onPressed: () => context.read<LoginCubit>().logout(),
-                    child: const Text('Get me out of here!'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Text('Who is this job for?', style: theme.textTheme.labelLarge),
+                    TextButton(
+                      onPressed: () => context.read<LoginCubit>().loginMember(memberName: name),
+                      child: const Text('Myself'),
+                    ),
+                    TextButton(
+                      onPressed: () => context.read<LoginCubit>().loginMemberInput(),
+                      child: const Text('Other member'),
+                    ),
+                    TextButton(
+                      onPressed: () => context.read<LoginCubit>().loginExtern(),
+                      child: const Text('External'),
+                    ),
+                    TextButton(
+                      onPressed: () => context.read<LoginCubit>().logout(),
+                      child: const Text('Get me out of here!'),
+                    ),
+                  ],
+                ),
               )),
         ),
       ),

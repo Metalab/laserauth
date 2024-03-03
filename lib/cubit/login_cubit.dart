@@ -38,6 +38,19 @@ class LoginCubit extends Cubit<LoginState> {
     }
   }
 
+  void loginMemberInput() {
+    switch (state) {
+      case LoggedIn(:final iButtonId, :final name):
+        log.info('Switch to member input');
+        emit(LoggedInMemberInput(
+          iButtonId: iButtonId,
+          name: name,
+        ));
+      case LoggedOut():
+      // Nothing to do
+    }
+  }
+
   void loginMember({required String memberName}) {
     switch (state) {
       case LoggedIn(:final iButtonId, :final laserDuration, :final laserTubeTurnOnTimestamp, :final name):
