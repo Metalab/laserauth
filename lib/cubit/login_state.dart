@@ -108,6 +108,52 @@ final class LoggedInExtern extends LoggedIn {
       );
 }
 
+final class LoggedInMetalab extends LoggedIn {
+  const LoggedInMetalab({
+    required super.iButtonId,
+    required super.name,
+    super.laserDuration = Duration.zero,
+    super.serverSubmittedDuration = Duration.zero,
+    super.laserTubeTurnOnTimestamp,
+    super.laserTubeTurnOnTime,
+  });
+
+  @override
+  LoggedInMetalab updateTime({
+    required Duration laserDuration,
+    Duration? laserTubeTurnOnTimestamp,
+    DateTime? laserTubeTurnOnTime,
+  }) {
+    return LoggedInMetalab(
+      iButtonId: iButtonId,
+      laserDuration: laserDuration,
+      serverSubmittedDuration: serverSubmittedDuration,
+      laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp,
+      laserTubeTurnOnTime: laserTubeTurnOnTime,
+      name: name,
+    );
+  }
+
+  @override
+  LoggedIn copyWith({
+    Uint8List? iButtonId,
+    Duration? laserDuration,
+    Duration? serverSubmittedDuration,
+    DateTime? loginTime,
+    Duration? laserTubeTurnOnTimestamp,
+    DateTime? laserTubeTurnOnTime,
+    String? name,
+  }) =>
+      LoggedInMetalab(
+        iButtonId: iButtonId ?? this.iButtonId,
+        laserDuration: laserDuration ?? this.laserDuration,
+        serverSubmittedDuration: serverSubmittedDuration ?? this.serverSubmittedDuration,
+        laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp ?? this.laserTubeTurnOnTimestamp,
+        laserTubeTurnOnTime: laserTubeTurnOnTime ?? this.laserTubeTurnOnTime,
+        name: name ?? this.name,
+      );
+}
+
 final class LoggedInMemberInput extends LoggedIn {
   const LoggedInMemberInput({
     required super.iButtonId,

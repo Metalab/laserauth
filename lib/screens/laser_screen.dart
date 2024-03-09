@@ -89,19 +89,21 @@ class _LaserScreenState extends State<LaserScreen> {
                     horizontal: true,
                     guidelinePercent: 0.5,
                   ),
-                  const Text('Costs:').applyConstraint(
-                    id: costsLabel,
-                    right: parent.center.margin(4),
-                    top: guidelineLabel.bottom.margin(8),
-                  ),
-                  BlocBuilder<ConfigurationCubit, Configuration>(
-                    builder: (context, configuration) => Text(
-                      '€ ${(centsForLaserTime(duration, extern: state is LoggedInExtern, configuration: configuration) / 100).toStringAsFixed(2)}',
+                  if (state is! LoggedInMetalab)
+                    const Text('Costs:').applyConstraint(
+                      id: costsLabel,
+                      right: parent.center.margin(4),
+                      top: guidelineLabel.bottom.margin(8),
                     ),
-                  ).applyConstraint(
-                    left: parent.center.margin(4),
-                    baseline: costsLabel.baseline,
-                  ),
+                  if (state is! LoggedInMetalab)
+                    BlocBuilder<ConfigurationCubit, Configuration>(
+                      builder: (context, configuration) => Text(
+                        '€ ${(centsForLaserTime(duration, extern: state is LoggedInExtern, configuration: configuration) / 100).toStringAsFixed(2)}',
+                      ),
+                    ).applyConstraint(
+                      left: parent.center.margin(4),
+                      baseline: costsLabel.baseline,
+                    ),
                   if (state.laserTubeTurnOnTimestamp == null)
                     FilledButton(
                       onPressed: () {

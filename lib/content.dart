@@ -19,7 +19,7 @@ class Content extends StatelessWidget {
           builder: (context, state) => switch (state) {
             LoggedOut(:final lastCosts, :final lastName) => LogoutScreen(lastCosts: lastCosts, lastName: lastName),
             LoggedInMemberInput() => const MemberInputScreen(),
-            LoggedInMember() || LoggedInExtern() => const LaserScreen(),
+            LoggedInMember() || LoggedInExtern() || LoggedInMetalab() => const LaserScreen(),
             LoggedIn(:final name) => LoginScreen(name: name),
           },
         )),

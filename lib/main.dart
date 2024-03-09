@@ -67,6 +67,7 @@ class MyApp extends StatelessWidget {
                   LoggedInExtern(:final name) => Text('Responsible: $name'),
                   LoggedInMember(:final name, :final memberName) =>
                     Text('Accountable operator $name, payable by $memberName'),
+                  LoggedInMetalab(:final name) => Text('Accountable operator $name, Metalab infrastructure project'),
                   LoggedIn() => const Text('Laserauth Login'),
                 },
               ),

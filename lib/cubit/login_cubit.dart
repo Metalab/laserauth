@@ -113,6 +113,30 @@ class LoginCubit extends Cubit<LoginState> {
     }
   }
 
+  void loginMetalab() {
+    switch (state) {
+      case LoggedIn(
+          :final iButtonId,
+          :final name,
+          :final laserDuration,
+          :final laserTubeTurnOnTimestamp,
+          :final laserTubeTurnOnTime
+        ):
+        log.info('Switch to metalab');
+        _resetIdleTimer();
+        hardware.power = true;
+        emit(LoggedInMetalab(
+          iButtonId: iButtonId,
+          name: name,
+          laserDuration: laserDuration,
+          laserTubeTurnOnTimestamp: laserTubeTurnOnTimestamp,
+          laserTubeTurnOnTime: laserTubeTurnOnTime,
+        ));
+      case LoggedOut():
+      // nothing to do
+    }
+  }
+
   void logout() {
     _loginIdleTimer?.cancel();
     _loginIdleTimer = null;
@@ -130,6 +154,20 @@ class LoginCubit extends Cubit<LoginState> {
         log.info(ThingEvent(kind: EventKind.logout, user: name));
         emit(LoggedOut(
           lastCosts: centsForLaserTime(laserDuration, extern: true, configuration: configuration),
+          lastName: name,
+        ));
+      case LoggedInMetalab(:final name, :var laserDuration, :final laserTubeTurnOnTime, :final serverSubmittedDuration):
+        if (laserTubeTurnOnTime != null) {
+          laserDuration = DateTime.now().difference(laserTubeTurnOnTime);
+        }
+        log.info(ThingEvent(
+          kind: EventKind.usageMetalab,
+          user: name,
+          usageSeconds: (laserDuration - serverSubmittedDuration).inSeconds,
+        ));
+        log.info(ThingEvent(kind: EventKind.logout, user: name));
+        emit(LoggedOut(
+          lastCosts: 0,
           lastName: name,
         ));
       case LoggedInMember(:final name, :var laserDuration, :final laserTubeTurnOnTime, :final serverSubmittedDuration):
@@ -163,21 +201,33 @@ class LoginCubit extends Cubit<LoginState> {
     }
 
     final state = this.state; // avoid having to cast this after the type check every time
-    if (state is LoggedInExtern || state is LoggedInMember) {
+    if (state is LoggedInExtern || state is LoggedInMember || state is LoggedInMetalab) {
       final duration = (state as LoggedIn).laserDuration - state.serverSubmittedDuration;
       if (duration > const Duration(seconds: 1)) {
-        if (state is LoggedInMember) {
-          log.info(ThingEvent(
-            kind: EventKind.usageMember,
-            user: state.memberName,
-            usageSeconds: duration.inSeconds,
-          ));
-        } else if (state is LoggedInExtern) {
-          log.info(ThingEvent(
-            kind: EventKind.usageNonmember,
-            user: state.name,
-            usageSeconds: duration.inSeconds,
-          ));
+        switch (state) {
+          case LoggedInExtern(:final name):
+            log.info(ThingEvent(
+              kind: EventKind.usageNonmember,
+              user: name,
+              usageSeconds: duration.inSeconds,
+            ));
+            break;
+          case LoggedInMember(:final memberName):
+            log.info(ThingEvent(
+              kind: EventKind.usageMember,
+              user: memberName,
+              usageSeconds: duration.inSeconds,
+            ));
+            break;
+          case LoggedInMetalab(:final name):
+            log.info(ThingEvent(
+              kind: EventKind.usageMetalab,
+              user: name,
+              usageSeconds: duration.inSeconds,
+            ));
+            break;
+          default:
+            break;
         }
         emit(state.copyWith(serverSubmittedDuration: state.laserDuration));
       }

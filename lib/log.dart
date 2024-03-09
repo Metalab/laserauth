@@ -6,7 +6,8 @@ enum EventKind {
   login(name: 'LOGIN'),
   logout(name: 'LOGOUT'),
   usageMember(name: 'USAGE_MEMBER'),
-  usageNonmember(name: 'USAGE_NONMEMBER');
+  usageNonmember(name: 'USAGE_NONMEMBER'),
+  usageMetalab(name: 'USAGE_METALAB');
 
   final String name;
   const EventKind({required this.name});

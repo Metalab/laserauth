@@ -31,7 +31,7 @@ class LoginScreen extends StatelessWidget {
                       child: const Text('Other member'),
                     ),
                     TextButton(
-                      onPressed: () => context.read<LoginCubit>().loginMember(memberName: 'metalab'),
+                      onPressed: () => context.read<LoginCubit>().loginMetalab(),
                       child: const Text('Metalab Infrastructure'),
                     ),
                     TextButton(
